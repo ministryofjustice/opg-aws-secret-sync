@@ -1,0 +1,83 @@
+name: Build, Tag & Release
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_HEAD_REF#refs/heads/})"
+      id: extract_branch
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-1
+        role-to-assume: arn:aws:iam::311462405659:role/sirius-ci
+        role-duration-seconds: 3600
+        role-session-name: GitHubActions
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+      with:
+        registries: 288342028542
+
+
+    - name: Bump version and push tag
+      uses: anothrNick/github-tag-action@1.33.0
+      id: create_tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INITIAL_VERSION: 0.0.0
+        DEFAULT_BUMP: minor
+        PRERELEASE_SUFFIX: ${{ steps.extract_branch.outputs.branch }}
+        RELEASE_BRANCHES: main
+        WITH_V: true
+
+    - name: Build & Push Development
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: sirius/lambda-secret-sync
+        IMAGE_TAG: ${{ steps.create_tag.outputs.new_tag }}
+      if: github.ref != 'refs/heads/main'
+      run: |
+        docker build -f lambda/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.create_tag.outputs.new_tag }}
+        release_name: ${{ steps.create_tag.outputs.new_tag }}
+        draft: false
+        prerelease: false
+
+    - name: Build & Push Main
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: sirius/lambda-secret-sync
+        BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+        IMAGE_TAG: ${{ steps.create_tag.outputs.new_tag }}
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        docker build -f lambda/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
