@@ -1,0 +1,43 @@
+name: Create Release & Publish
+
+# on:
+#   push:
+#     branches:
+#       - main
+on:
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+    - name: Bump version and push tag
+      uses: anothrNick/github-tag-action@1.33.0
+      id: create_tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INITIAL_VERSION: 0.0.0
+        DEFAULT_BUMP: minor
+        RELEASE_BRANCHES: main
+        WITH_V: true
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.create_tag.outputs.new_tag }}
+        release_name: ${{ steps.create_tag.outputs.new_tag }}
+        draft: false
+        prerelease: false
+    - name: goreleaser
+      uses: goreleaser/goreleaser-action@master
+      with:
+        args: release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
