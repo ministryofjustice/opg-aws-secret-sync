@@ -14,4 +14,6 @@ jobs:
       uses: anothrNick/github-tag-action@1.26.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INITIAL_VERSION: 0.1.0
+        DEFAULT_BUMP: minor
         WITH_V: true

@@ -1,0 +1,25 @@
+# Make sure to check the documentation at http://goreleaser.com
+project_name: opg-aws-secret-sync
+
+env_files:
+  github_token: ${{ secrets.access_token }}
+
+release:
+  github:
+    owner: ministryofjustice
+    name: opg-aws-secret-sync
+
+builds:
+  - binary: opg-aws-secret-sync
+    id: main
+    main: ./main.go
+    goarch:
+      - linux
+
+archives:
+  -
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      amd64: x86_64
