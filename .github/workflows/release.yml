@@ -1,10 +1,8 @@
 name: Publish Release
 on:
-  push:
-    branches:
-      - "!*"
-    tags:
-      - "v*.*.*"
+  release:
+    types: [published, released]
+
 jobs:
   build:
     runs-on: ubuntu-latest
