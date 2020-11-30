@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "lambda_function" {
-  filename         = data.archive_file.lambda_archive.output_path
+  filename         = var.filename
   function_name    = var.lambda_name
   handler          = var.handler
   layers           = [aws_lambda_layer_version.lambda_layer.arn]

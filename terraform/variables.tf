@@ -19,3 +19,5 @@ variable "tags" {}
 variable "memory" {}
 
 variable "environment" {}
+
+variable "filename" {}
