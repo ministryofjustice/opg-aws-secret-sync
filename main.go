@@ -1,11 +1,11 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"log"
 	"os"
+
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -16,14 +16,14 @@ import (
 var (
 	sourceRegion = os.Getenv("SOURCE_REGION")
 	targetRegion = os.Getenv("TARGET_REGION")
-	eventJson map[string]interface{}
+	eventJson    map[string]interface{}
 )
 
 func main() {
 	lambda.Start(Handler)
 }
 
-func Handler(ctx context.Context, event events.CloudWatchEvent) {
+func Handler(event events.CloudWatchEvent) {
 
 	log.Printf("Processing Lambda request %s\n", event.ID)
 
@@ -42,8 +42,8 @@ func Handler(ctx context.Context, event events.CloudWatchEvent) {
 	log.Printf("Retrived secret value for %s\n", secretArn)
 	log.Printf("Updating secret value in %s\n", targetRegion)
 	secretValue := *response.SecretString
-	secretVersionId := *response.VersionId
-	resp, err := updateSecretValue(secretValue, secretVersionId)
+	secretVersionID := *response.VersionId
+	resp, err := updateSecretValue(secretValue, secretVersionID)
 	if err != nil {
 		log.Fatalf("There was an issue updating the secret value.")
 	}
@@ -69,7 +69,7 @@ func getNewSecret(secretArn string) (*secretsmanager.GetSecretValueOutput, error
 	return result, nil
 }
 
-func updateSecretValue(secret string, versionId string) (*secretsmanager.PutSecretValueOutput, error) {
+func updateSecretValue(secret string, versionID string) (*secretsmanager.PutSecretValueOutput, error) {
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(targetRegion)},
 	)
