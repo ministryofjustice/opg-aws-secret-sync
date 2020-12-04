@@ -1,3 +1,8 @@
+variable "account_id" {
+  description = "AWS Account ID that your lambda will be in"
+  type        = string
+}
+
 variable "description" {
   description = "Description of your Lambda Function (or Layer)"
   type        = string

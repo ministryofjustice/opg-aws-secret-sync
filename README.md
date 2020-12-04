@@ -19,6 +19,7 @@ Lambda to sync secrets across regions: Managed by opg-org-infra &amp; Terraform
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| account\_id | AWS Account ID that your lambda will be in | `string` | n/a | yes |
 | description | Description of your Lambda Function (or Layer) | `string` | `""` | no |
 | environment | Environment name | `string` | n/a | yes |
 | environment\_variables | A map that defines environment variables for the Lambda Function. | `map(string)` | `{}` | no |
