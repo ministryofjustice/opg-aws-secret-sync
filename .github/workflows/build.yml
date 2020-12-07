@@ -35,7 +35,7 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
       with:
-        registries: 311462405659
+        registries: 288342028542
 
 
     - name: Bump version and push tag
@@ -52,7 +52,7 @@ jobs:
     - name: Build & Push Development
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: shared/secret-sync
+        ECR_REPOSITORY: sirius/lambda-secret-sync
         IMAGE_TAG: ${{ steps.create_tag.outputs.new_tag }}
       if: github.ref != 'refs/heads/master'
       run: |
@@ -74,7 +74,7 @@ jobs:
     - name: Build & Push Main
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: shared/secret-sync
+        ECR_REPOSITORY: sirius/lambda-secret-sync
         BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
         IMAGE_TAG: ${{ steps.create_tag.outputs.new_tag }}
       if: github.ref == 'refs/heads/master' && github.event_name == 'push'
