@@ -25,8 +25,8 @@ variable "handler" {
   type        = string
 }
 
-variable "image_arn" {
-  description = "The ARN for the coontainer image to use"
+variable "image_uri" {
+  description = "The URI for the coontainer image to use"
   type        = string
   default     = null
 }
@@ -42,12 +42,18 @@ variable "runtime" {
   default     = "go1.x"
 }
 
+
+variable "package_type" {
+  description = "The Lambda deployment package type."
+  type        = string
+  default     = "Image"
+}
+
 variable "timeout" {
   description = "The amount of time your Lambda Function has to run in seconds."
   type        = number
   default     = 3
 }
-
 
 variable "tags" {
   description = "A map of tags to assign to resources."

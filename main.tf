@@ -2,6 +2,7 @@ resource "aws_lambda_function" "lambda_function" {
   function_name = var.lambda_name
   handler       = var.handler
   image_uri     = var.image_arn
+  package_type  = var.package_type
   role          = aws_iam_role.lambda_role.arn
   runtime       = var.runtime
   timeout       = var.timeout
