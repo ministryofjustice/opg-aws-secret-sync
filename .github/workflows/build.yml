@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.create_tag.outputs.new_tag }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -81,3 +83,25 @@ jobs:
       run: |
         docker build -f lambda/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  push_to_parameter_store:
+    name: Store Tag in Parameter Store
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::997462338508:role/sirius-ci
+          role-duration-seconds: 3600
+          role-session-name: GitHubActions
+      - name: Install AWS CLI
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+      - name: Push Tag to Parameter Store
+        run: |
+          aws ssm put-parameter --name "opg-aws-secret-sync-latest-green-build" --type "String" --value "${{needs.build.outputs.tag}}" --overwrite --region=eu-west-1
