@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.create_tag.outputs.new_tag }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -81,3 +83,23 @@ jobs:
       run: |
         docker build -f lambda/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  push_to_parameter_store:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Store Tag in Parameter Store
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+      - run:
+          temp_role=$(aws sts assume-role --role-arn arn:aws:iam::997462338508:role/sirius-ci --role-session-name ci)
+          export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq .Credentials.AccessKeyId | xargs)
+          export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq .Credentials.SecretAccessKey | xargs)
+          export AWS_SESSION_TOKEN=$(echo $temp_role | jq .Credentials.SessionToken | xargs)
+          aws ssm put-parameter --name "opg-aws-secret-sync-latest-green-build" --type "String" --value "${{needs.build.outputs.tag}}" --overwrite --region=eu-west-1
+        shell: bash
