@@ -20,7 +20,7 @@ var (
 )
 
 func main() {
-	log.Printf("Calling the handler...")
+	log.Print("Calling the handler...")
 	lambda.Start(Handler)
 }
 
@@ -33,8 +33,10 @@ func Handler(event events.CloudWatchEvent) {
 		log.Fatal("Could not unmarshal scheduled event: ", err)
 	}
 
+	log.Print("Getting the event detail...")
 	detail := eventJson["additionalEventData"].(map[string]interface{})
 
+	log.Print("Getting the SecretId...")
 	secretArn := detail["SecretId"].(string)
 
 	log.Printf("About to get secret value for %s\n", secretArn)
@@ -54,6 +56,7 @@ func Handler(event events.CloudWatchEvent) {
 
 func getNewSecret(secretArn string) (*secretsmanager.GetSecretValueOutput, error) {
 
+	log.Print("Creating session for getNewSecret...")
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(sourceRegion)},
 	)
@@ -71,6 +74,8 @@ func getNewSecret(secretArn string) (*secretsmanager.GetSecretValueOutput, error
 }
 
 func updateSecretValue(secret string, versionID string) (*secretsmanager.PutSecretValueOutput, error) {
+
+	log.Print("Creating session for updateSecretValue...")
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(targetRegion)},
 	)
