@@ -16,11 +16,11 @@ import (
 var (
 	sourceRegion = os.Getenv("SOURCE_REGION")
 	targetRegion = os.Getenv("TARGET_REGION")
-	eventJson    map[string]interface{}
+	eventJSON    map[string]interface{}
 )
 
 func main() {
-	log.Printf("Calling the handler...")
+	log.Print("Calling the handler...")
 	lambda.Start(Handler)
 }
 
@@ -28,13 +28,17 @@ func Handler(event events.CloudWatchEvent) {
 
 	log.Printf("Processing Lambda request %s\n", event.ID)
 
-	err := json.Unmarshal(event.Detail, &eventJson)
+	err := json.Unmarshal(event.Detail, &eventJSON)
 	if err != nil {
 		log.Fatal("Could not unmarshal scheduled event: ", err)
 	}
 
-	detail := eventJson["additionalEventData"].(map[string]interface{})
+	log.Printf("logging request detail%s\n", event.Detail)
 
+	log.Print("Getting the event detail...")
+	detail := eventJSON["additionalEventData"].(map[string]interface{})
+
+	log.Print("Getting the SecretId...")
 	secretArn := detail["SecretId"].(string)
 
 	log.Printf("About to get secret value for %s\n", secretArn)
@@ -54,6 +58,7 @@ func Handler(event events.CloudWatchEvent) {
 
 func getNewSecret(secretArn string) (*secretsmanager.GetSecretValueOutput, error) {
 
+	log.Print("Creating session for getNewSecret...")
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(sourceRegion)},
 	)
@@ -71,6 +76,8 @@ func getNewSecret(secretArn string) (*secretsmanager.GetSecretValueOutput, error
 }
 
 func updateSecretValue(secret string, versionID string) (*secretsmanager.PutSecretValueOutput, error) {
+
+	log.Print("Creating session for updateSecretValue...")
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(targetRegion)},
 	)
