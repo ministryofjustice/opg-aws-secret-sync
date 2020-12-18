@@ -38,4 +38,5 @@ Lambda to sync secrets across regions: Managed by opg-org-infra &amp; Terraform
 ## Outputs
 
 No output.
+
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

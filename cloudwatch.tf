@@ -14,7 +14,7 @@ locals {
 
   event_pattern = jsonencode({
     detail-type = [
-      "AWS Service Event via CloudTrail"
+      "AWS API Call via CloudTrail"
     ],
     source = [
       "aws.secretsmanager"
