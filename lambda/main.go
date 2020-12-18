@@ -20,6 +20,7 @@ var (
 )
 
 func main() {
+	log.Printf("Calling the handler...")
 	lambda.Start(Handler)
 }
 
