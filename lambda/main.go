@@ -16,11 +16,11 @@ import (
 var (
 	sourceRegion = os.Getenv("SOURCE_REGION")
 	targetRegion = os.Getenv("TARGET_REGION")
-	eventJson    map[string]interface{}
+	eventJSON    map[string]interface{}
 )
 
 func main() {
-	log.Printf("Calling the handler...")
+	log.Print("Calling the handler...")
 	lambda.Start(Handler)
 }
 
@@ -28,23 +28,26 @@ func Handler(event events.CloudWatchEvent) {
 
 	log.Printf("Processing Lambda request %s\n", event.ID)
 
-	err := json.Unmarshal(event.Detail, &eventJson)
+	err := json.Unmarshal(event.Detail, &eventJSON)
 	if err != nil {
 		log.Fatal("Could not unmarshal scheduled event: ", err)
 	}
 
-	detail := eventJson["additionalEventData"].(map[string]interface{})
+	log.Printf("Logging the JSON: %s", &eventJSON)
 
-	secretArn := detail["SecretId"].(string)
+	log.Print("Getting the event detail...")
+	detail := eventJSON["requestParameters"].(map[string]interface{})
 
-	log.Printf("About to get secret value for %s\n", secretArn)
-	response, _ := getNewSecret(secretArn)
+	log.Print("Getting the SecretId...")
+	secretID := detail["secretId"].(string)
 
-	log.Printf("Retrived secret value for %s\n", secretArn)
-	log.Printf("Updating secret value in %s\n", targetRegion)
+	log.Printf("About to get secret value for %s\n", secretID)
+	response, _ := getNewSecret(secretID)
+
+	log.Printf("Retrived the secret value for %s\n", secretID)
+	log.Printf("Updating the secret value in %s\n", targetRegion)
 	secretValue := *response.SecretString
-	secretVersionID := *response.VersionId
-	resp, err := updateSecretValue(secretValue, secretVersionID)
+	resp, err := updateSecretValue(secretValue, secretID)
 	if err != nil {
 		log.Fatalf("There was an issue updating the secret value.")
 	}
@@ -54,6 +57,7 @@ func Handler(event events.CloudWatchEvent) {
 
 func getNewSecret(secretArn string) (*secretsmanager.GetSecretValueOutput, error) {
 
+	log.Print("Creating session for getNewSecret...")
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(sourceRegion)},
 	)
@@ -70,12 +74,15 @@ func getNewSecret(secretArn string) (*secretsmanager.GetSecretValueOutput, error
 	return result, nil
 }
 
-func updateSecretValue(secret string, versionID string) (*secretsmanager.PutSecretValueOutput, error) {
+func updateSecretValue(secret string, secretID string) (*secretsmanager.PutSecretValueOutput, error) {
+
+	log.Print("Creating session for updateSecretValue...")
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String(targetRegion)},
 	)
 	svc := secretsmanager.New(awsSession)
 	input := &secretsmanager.PutSecretValueInput{
+		SecretId:     aws.String(secretID),
 		SecretString: aws.String(secret),
 	}
 
