@@ -58,7 +58,7 @@ data "aws_iam_policy_document" "lambda" {
   statement {
     sid       = "SecretsManagerOriginRegion"
     effect    = "Allow"
-    resources = ["arn:aws:kms:${var.source_secret_region}:${var.account_id}:*"]
+    resources = ["arn:aws:secretsmanager:${var.source_secret_region}:${var.account_id}:*"]
     actions = [
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetSecretValue"
@@ -68,7 +68,7 @@ data "aws_iam_policy_document" "lambda" {
   statement {
     sid       = "SecretsManagerReplicaRegion"
     effect    = "Allow"
-    resources = ["arn:aws:kms:${var.target_secret_region}:${var.account_id}:*"]
+    resources = ["arn:aws:secretsmanager:${var.target_secret_region}:${var.account_id}:*"]
     actions = [
       "secretsmanager:UpdateSecretVersionStage",
       "secretsmanager:PutSecretValue",
