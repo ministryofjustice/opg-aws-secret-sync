@@ -2,7 +2,7 @@ FROM golang:1.14 as build-env
 
 WORKDIR /app
 
-COPY lambda/go.mod lambda/go.sum lambda/main.go .
+COPY lambda/go.mod lambda/go.sum lambda/main.go ./
 
 RUN go mod download
 RUN GOOS=linux GOARCH=amd64 go build -a -o secret-sync
